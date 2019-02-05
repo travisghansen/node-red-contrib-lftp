@@ -1,0 +1,38 @@
+{
+  "name": "node-red-contrib-lftp",
+  "version": "0.1.0",
+  "description": "A node-red node that supports FTP(s) and SFTP file transfer",
+  "main": "lftp.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/travisghansen/node-red-contrib-lftp.git"
+  },
+  "keywords": [
+    "node-red",
+    "node",
+    "nodered",
+    "ftp",
+    "ftps",
+    "sftp"
+  ],
+  "node-red": {
+    "nodes": {
+      "lftp-config": "lftp.js",
+      "lftp-command": "lftp.js"
+    }
+  },
+  "author": "Travis Glenn Hansen <travisghansen@yahoo.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/travisghansen/node-red-contrib-lftp/issues"
+  },
+  "homepage": "https://github.com/travisghansen/node-red-contrib-lftp#readme",
+  "dependencies": {
+    "ftps": "^1.1.1",
+    "parse-listing": "^1.1.3",
+    "tmp": "0.0.33"
+  }
+}

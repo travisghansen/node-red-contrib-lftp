@@ -1,0 +1,210 @@
+<script type="text/x-red" data-help-name="lftp-config">
+  <p>lftp config</p>
+  <p>help available <a href="https://github.com/Atinux/node-ftps#usage">here</a></p>
+  <p>additional commands details <a href="http://lftp.yar.ru/lftp-man.html">here</a></p>
+  <p>For self-signed certs use <code>set ssl:verify-certificate no;</code></p>
+</script>
+
+<script type="text/x-red" data-help-name="lftp-command">
+  <p>lftp command</p>
+  <p>execute lftp commands</p>
+</script>
+
+<script type="text/x-red" data-template-name="lftp-config">
+  <div class="form-row">
+    <label for="node-input-protocol"><i class="fa fa-wrench"></i> Protocol</label>
+    <select type="text" id="node-input-protocol">
+      <option value="ftp">FTP</option>
+      <option value="ftps">FTPS</option>
+      <option value="sftp">SFTP</option>
+    </select>
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-host"><i class="fa fa-bookmark"></i> Host</label>
+    <input type="text" id="node-config-input-host" placeholder="localhost" style="width: 40%;" />
+    <label for="node-config-input-port" style="margin-left: 10px; width: 35px; "> Port</label>
+    <input type="text" id="node-config-input-port" placeholder="21" style="width:45px">
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-username"><i class="fa fa-user"></i> Username</label>
+    <input type="text" id="node-config-input-username" placeholder="anonymous" />
+  </div>
+  <div class="form-row">
+    <label for="node-input-requiresPassword"><i class="fa fa-key"></i> Requires Password</label>
+    <input type="checkbox" id="node-input-requriesPassword" placeholder="once" style="width: 10%; vertical-align: top;">
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-password"><i class="fa fa-lock"></i> Password</label>
+    <input type="password" id="node-config-input-password">
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-retries"><i class="fa fa-clock-o"></i> Retries</label>
+    <input type="text" id="node-config-input-retries" placeholder="2">
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-timeout"><i class="fa fa-clock-o"></i> Timeout</label>
+    <input type="text" id="node-config-input-timeout" placeholder="10">
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-retryInterval"><i class="fa fa-clock-o"></i> Retry Interval</label>
+    <input type="text" id="node-config-input-retryInterval" placeholder="5">
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-retryMultiplier"><i class="fa fa-clock-o"></i> Retry Multiplier</label>
+    <input type="text" id="node-config-input-retryMultiplier" placeholder="1">
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-additionalLftpCommands" style="width: 20%; vertical-align: top;"> Additional Commands</label>
+    <input type="text" id="node-config-input-additionalLftpCommands" style="width: 35%; vertical-align: top;">
+  </div>
+</script>
+
+<script type="text/javascript">
+  RED.nodes.registerType("lftp-config", {
+    category: "config",
+    color: "BurlyWood",
+    defaults: {
+      host: { value: "localhost", required: true },
+
+      // protocol is added on beginning of host, ex : sftp://domain.com in this case
+      protocol: { value: "ftp" },
+
+      // port is added to the end of the host, ex: sftp://domain.com:22 in this case
+      port: { value: 21 },
+
+      escape: { value: true },
+      retries: { value: 2 },
+      timeout: { value: 10 },
+      retryInterval: { value: 5 },
+      retryMultiplier: { value: 1 },
+      requiresPassword: { value: true },
+
+      additionalLftpCommands: { value: "" }
+    },
+    credentials: {
+      username: { type: "text" },
+      password: { type: "password" }
+    },
+    label: function() {
+      return this.host;
+    }
+  });
+</script>
+
+<script type="text/x-red" data-template-name="lftp-command">
+  <div class="form-row">
+    <label for="node-input-server"><i class="fa fa-user"></i> Add new FTP Server</label>
+    <input type="text" id="node-input-server">
+  </div>
+  <div class="form-row">
+    <label for="node-input-operation"><i class="fa fa-wrench"></i> Operation</label>
+    <select type="text" id="node-input-operation">
+      <option value="list">list</option>
+      <option value="get">get</option>
+      <option value="put">put</option>
+      <option value="delete">delete</option>
+      <option value="move">move</option>
+      <option value="raw">raw</option>
+    </select>
+  </div>
+  <div class="form-row input-workdir-row hidden">
+    <label for="node-input-workdir"><i class="fa fa-folder-open"></i> Working Directory</label>
+    <input type="text" id="node-input-workdir" placeholder="Working Directory">
+  </div>
+  <div class="form-row input-filename-row hidden">
+    <label for="node-input-filename"><i class="fa fa-file"></i> Filename</label>
+    <input type="text" id="node-input-filename" placeholder="Filename">
+  </div>
+  <div class="form-row input-targetFilename-row hidden">
+    <label for="node-input-targetFilename"><i class="fa fa-file"></i> Target Filename</label>
+    <input type="text" id="node-input-targetFilename" placeholder="Filename">
+  </div>
+  <div class="form-row input-savedir-row hidden">
+    <label for="node-input-savedir"><i class="fa fa-folder-open"></i> Save Directory</label>
+    <input type="text" id="node-input-savedir" placeholder="Save Directory">
+  </div>
+  <div class="form-row input-localFilename-row hidden">
+    <label for="node-input-localFilename"><i class="fa fa-file"></i> Local Filename</label>
+    <input type="text" id="node-input-localFilename" placeholder="Local Filename">
+  </div>
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+    <input type="text" id="node-input-name" placeholder="Name">
+  </div>
+</script>
+
+<script type="text/javascript">
+  RED.nodes.registerType("lftp-command", {
+    category: "storage-input",
+    color: "BurlyWood",
+    defaults: {
+      server: { type: "lftp-config", required: true },
+      operation: { value: "list" },
+      filename: { value: "" },
+      targetFilename: { value: "" },
+      localFilename: { value: "" },
+      workdir: { value: "" },
+      savedir: { value: "" },
+      name: { value: "" }
+    },
+    inputs: 1,
+    outputs: 1,
+    icon: "file.png",
+    label: function() {
+      var server = RED.nodes.node(this.server);
+      return this.name || "lftp";
+    },
+    labelStyle: function() {
+      return this.name ? "node_label_italic" : "";
+    },
+    oneditprepare: function() {
+      var savedir = $(".input-savedir-row");
+      var filename = $(".input-filename-row");
+      var targetFilename = $(".input-targetFilename-row");
+      var localFilename = $(".input-localFilename-row");
+      var workdir = $(".input-workdir-row");
+
+      $("#node-input-operation").change(function() {
+        var id = $("#node-input-operation option:selected").val();
+        console.log(id);
+        if (id == "list") {
+          workdir.show();
+          filename.hide();
+          targetFilename.hide();
+          savedir.hide();
+          localFilename.hide();
+        } else if (id == "put") {
+          workdir.show();
+          filename.show();
+          targetFilename.hide();
+          savedir.hide();
+          localFilename.hide();
+        } else if (id == "get") {
+          workdir.show();
+          filename.show();
+          targetFilename.hide();
+          savedir.hide();
+          localFilename.hide();
+        } else if (id == "delete") {
+          workdir.show();
+          filename.show();
+          targetFilename.hide();
+          savedir.hide();
+          localFilename.hide();
+        } else if (id == "move") {
+          workdir.show();
+          filename.show();
+          targetFilename.show();
+          savedir.hide();
+          localFilename.hide();
+        } else {
+          workdir.hide();
+          filename.hide();
+          targetFilename.hide();
+          savedir.hide();
+          localFilename.hide();
+        }
+      });
+    }
+  });
+</script>
