@@ -61,48 +61,50 @@ module.exports = function(RED) {
     this.serverConfig = RED.nodes.getNode(this.server);
     //this.credentials = RED.nodes.getCredentials(this.server);
 
+    var statuses = {
+      active: { fill: "blue", shape: "dot", text: "executing" },
+      error: { fill: "red", shape: "dot", text: "error" },
+      blank: {}
+    };
+
     if (this.server) {
       //console.log("lftp - this.serverConfig: " + JSON.stringify(this.serverConfig));
 
       node.on("input", function(msg) {
         try {
-          node.workdir = node.workdir || msg.workdir || "";
-          node.filename = node.filename || msg.payload.filename || "";
-          node.targetFilename =
+          var event = {};
+          event.workdir = node.workdir || msg.workdir || "";
+          event.filename = node.filename || msg.payload.filename || "";
+          event.targetFilename =
             node.targetFilename || msg.payload.targetFilename || "";
-          node.savedir = node.savedir || msg.savedir || "";
-          node.localFilename = node.localFilename || msg.localFilename || "";
-
-          /*server options*/
-          node.serverConfig.options.host =
-            msg.host || node.serverConfig.options.host;
-          node.serverConfig.options.port =
-            msg.port || node.serverConfig.options.port;
-          node.serverConfig.options.username =
-            msg.username || node.serverConfig.options.username;
-          node.serverConfig.options.password =
-            msg.password || node.serverConfig.options.password;
+          event.savedir = node.savedir || msg.savedir || "";
+          event.localFilename = node.localFilename || msg.localFilename || "";
 
           //console.log("lftp - performing operation: " + node.operation);
+
+          node.status(statuses.active);
 
           switch (node.operation) {
             case "list":
               var conn = new FTPS(node.serverConfig.options);
               conn
-                .cd(node.workdir)
+                .cd(event.workdir)
                 .ls()
                 .exec(function(err, res) {
                   //console.log(res);
                   if (err) {
                     node.error(err, msg);
+                    node.status(statuses.blank);
                   } else if (res.error) {
                     node.error(res.error, msg);
+                    node.status(statuses.blank);
                   } else {
                     Parser.parseEntries(res.data, function(err, data) {
-                      msg.workdir = node.workdir;
+                      msg.workdir = event.workdir;
                       msg.payload = {};
                       msg.payload = data;
                       node.send(msg);
+                      node.status(statuses.blank);
                     });
                   }
                 });
@@ -110,40 +112,43 @@ module.exports = function(RED) {
             case "get":
               // set filename
               var filename =
-                utils.addTrailingSlash(node.workdir) + node.filename;
+                utils.addTrailingSlash(event.workdir) + event.filename;
 
               var conn = new FTPS(node.serverConfig.options);
               conn.cat(filename).exec(function(err, res) {
                 //console.log(res);
                 if (err) {
                   node.error(err, msg);
+                  node.status(statuses.blank);
                 } else if (res.error) {
                   node.error(res.error, msg);
+                  node.status(statuses.blank);
                 } else {
                   node.status({});
-                  msg.workdir = node.workdir;
+                  msg.workdir = event.workdir;
                   msg.payload = {};
                   msg.payload.filedata = res.data;
-                  msg.payload.filename = node.filename;
+                  msg.payload.filename = event.filename;
                   msg.payload.filepath = filename;
                   node.send(msg);
+                  node.status(statuses.blank);
                 }
               });
               break;
             case "put":
-              if (!node.filename.length > 0) {
+              if (!event.filename.length > 0) {
                 var d = new Date();
                 var guid = d.getTime().toString();
 
-                if (node.fileExtension == "") {
-                  node.fileExtension = ".txt";
+                if (event.fileExtension == "") {
+                  event.fileExtension = ".txt";
                 }
 
-                node.filename = guid + node.fileExtension;
+                event.filename = guid + node.fileExtension;
               }
 
               var filename =
-                utils.addTrailingSlash(node.workdir) + node.filename;
+                utils.addTrailingSlash(event.workdir) + event.filename;
               var filedata =
                 msg.payload.filedata || JSON.stringify(msg.payload);
 
@@ -166,15 +171,18 @@ module.exports = function(RED) {
                     cleanupCallback();
                     if (err) {
                       node.error(err, msg);
+                      node.status(statuses.blank);
                     } else if (res.error) {
                       node.error(res.error, msg);
+                      node.status(statuses.blank);
                     } else {
                       node.status({});
-                      msg.workdir = node.workdir;
+                      msg.workdir = event.workdir;
                       msg.payload = {};
-                      msg.payload.filename = node.filename;
+                      msg.payload.filename = event.filename;
                       msg.payload.filepath = filename;
                       node.send(msg);
+                      node.status(statuses.blank);
                     }
                   });
                 });
@@ -183,46 +191,51 @@ module.exports = function(RED) {
             case "delete":
               // set filename
               var filename =
-                utils.addTrailingSlash(node.workdir) + node.filename;
+                utils.addTrailingSlash(event.workdir) + event.filename;
 
               var conn = new FTPS(node.serverConfig.options);
               conn.rm(filename).exec(function(err, res) {
                 //console.log(res);
                 if (err) {
                   node.error(err, msg);
+                  node.status(statuses.blank);
                 } else if (res.error) {
                   node.error(res.error, msg);
+                  node.status(statuses.blank);
                 } else {
                   node.status({});
-                  msg.workdir = node.workdir;
+                  msg.workdir = event.workdir;
                   msg.payload = {};
-                  msg.payload.filename = node.filename;
+                  msg.payload.filename = event.filename;
                   msg.payload.filepath = filename;
                   node.send(msg);
+                  node.status(statuses.blank);
                 }
               });
               break;
             case "move":
               // move filename
               var filename =
-                utils.addTrailingSlash(node.workdir) + node.filename;
+                utils.addTrailingSlash(event.workdir) + event.filename;
               var targetFilename =
-                utils.addTrailingSlash(node.workdir) + node.targetFilename;
+                utils.addTrailingSlash(event.workdir) + event.targetFilename;
 
               var conn = new FTPS(node.serverConfig.options);
               conn.mv(filename, targetFilename).exec(function(err, res) {
                 //console.log(res);
                 if (err) {
                   node.error(err, msg);
+                  node.status(statuses.blank);
                 } else if (res.error) {
                   node.error(res.error, msg);
+                  node.status(statuses.blank);
                 } else {
-                  node.status({});
-                  msg.workdir = node.workdir;
+                  msg.workdir = event.workdir;
                   msg.payload = {};
-                  msg.payload.filename = node.targetFilename;
+                  msg.payload.filename = event.targetFilename;
                   msg.payload.filepath = targetFilename;
                   node.send(msg);
+                  node.status(statuses.blank);
                 }
               });
               break;
@@ -239,23 +252,28 @@ module.exports = function(RED) {
                 //console.log(res);
                 if (err) {
                   node.error(err, msg);
+                  node.status(statuses.blank);
                 } else if (res.error) {
                   node.error(res.error, msg);
+                  node.status(statuses.blank);
                 } else {
-                  node.status({});
                   msg.payload = res.data;
                   node.send(msg);
+                  node.status(statuses.blank);
                 }
               });
               break;
           }
         } catch (error) {
           node.error(error, msg);
+          node.status(statuses.blank);
         }
       });
     } else {
       node.error("missing server configuration");
+      node.status(statuses.blank);
     }
   }
+
   RED.nodes.registerType("lftp-command", LftpCommandNode);
 };
