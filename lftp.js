@@ -80,6 +80,23 @@ module.exports = function(RED) {
 
           node.status(statuses.active);
 
+          /**
+           * Returns true if the reponse is an error, false otherwise
+           *
+           * @param {*} err
+           * @param {*} res
+           */
+          var responseErrorHandler = function(err, res) {
+            var message = err || res.error;
+            if (message) {
+              node.error(message, msg);
+              node.status(statuses.blank);
+              return true;
+            } else {
+              return false;
+            }
+          };
+
           switch (node.operation) {
             case "list":
               var conn = new FTPS(node.serverConfig.options);
@@ -88,16 +105,9 @@ module.exports = function(RED) {
                 .ls()
                 .exec(function(err, res) {
                   //console.log(res);
-                  if (err) {
-                    node.error(err, msg);
-                    node.status(statuses.blank);
-                  } else if (res.error) {
-                    node.error(res.error, msg);
-                    node.status(statuses.blank);
-                  } else {
+                  if (!responseErrorHandler(err, res)) {
                     Parser.parseEntries(res.data, function(err, data) {
                       msg.workdir = event.workdir;
-                      msg.payload = {};
                       msg.payload = data;
                       node.send(msg);
                       node.status(statuses.blank);
@@ -113,13 +123,7 @@ module.exports = function(RED) {
               var conn = new FTPS(node.serverConfig.options);
               conn.cat(filename).exec(function(err, res) {
                 //console.log(res);
-                if (err) {
-                  node.error(err, msg);
-                  node.status(statuses.blank);
-                } else if (res.error) {
-                  node.error(res.error, msg);
-                  node.status(statuses.blank);
-                } else {
+                if (!responseErrorHandler(err, res)) {
                   msg.workdir = event.workdir;
                   msg.payload = {};
                   msg.payload.filedata = res.data;
@@ -164,13 +168,7 @@ module.exports = function(RED) {
                   conn.put(path, filename).exec(function(err, res) {
                     //console.log(res);
                     cleanupCallback();
-                    if (err) {
-                      node.error(err, msg);
-                      node.status(statuses.blank);
-                    } else if (res.error) {
-                      node.error(res.error, msg);
-                      node.status(statuses.blank);
-                    } else {
+                    if (!responseErrorHandler(err, res)) {
                       msg.workdir = event.workdir;
                       msg.payload = {};
                       msg.payload.filename = event.filename;
@@ -190,13 +188,7 @@ module.exports = function(RED) {
               var conn = new FTPS(node.serverConfig.options);
               conn.rm(filename).exec(function(err, res) {
                 //console.log(res);
-                if (err) {
-                  node.error(err, msg);
-                  node.status(statuses.blank);
-                } else if (res.error) {
-                  node.error(res.error, msg);
-                  node.status(statuses.blank);
-                } else {
+                if (!responseErrorHandler(err, res)) {
                   msg.workdir = event.workdir;
                   msg.payload = {};
                   msg.payload.filename = event.filename;
@@ -216,13 +208,7 @@ module.exports = function(RED) {
               var conn = new FTPS(node.serverConfig.options);
               conn.mv(filename, targetFilename).exec(function(err, res) {
                 //console.log(res);
-                if (err) {
-                  node.error(err, msg);
-                  node.status(statuses.blank);
-                } else if (res.error) {
-                  node.error(res.error, msg);
-                  node.status(statuses.blank);
-                } else {
+                if (!responseErrorHandler(err, res)) {
                   msg.workdir = event.workdir;
                   msg.payload = {};
                   msg.payload.filename = event.targetFilename;
@@ -243,13 +229,7 @@ module.exports = function(RED) {
               }
               conn.exec(function(err, res) {
                 //console.log(res);
-                if (err) {
-                  node.error(err, msg);
-                  node.status(statuses.blank);
-                } else if (res.error) {
-                  node.error(res.error, msg);
-                  node.status(statuses.blank);
-                } else {
+                if (!responseErrorHandler(err, res)) {
                   msg.payload = res.data;
                   node.send(msg);
                   node.status(statuses.blank);

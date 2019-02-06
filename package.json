@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-lftp",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A node-red node that supports FTP(s) and SFTP file transfer",
   "main": "lftp.js",
   "scripts": {
