@@ -20,8 +20,7 @@
   ],
   "node-red": {
     "nodes": {
-      "lftp-config": "lftp.js",
-      "lftp-command": "lftp.js"
+      "lftp": "lftp.js"
     }
   },
   "author": "Travis Glenn Hansen <travisghansen@yahoo.com>",

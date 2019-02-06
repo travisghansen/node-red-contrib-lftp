@@ -11,8 +11,6 @@ module.exports = function(RED) {
 
     this.options = {
       host: n.host || "localhost", // required
-      //username: n.username || "", // Optional. Use empty username for anonymous access.
-      //password: n.password || "", // Required if username is not empty, except when requiresPassword: false
       protocol: n.protocol || "ftp", // Optional, values : 'ftp', 'sftp', 'ftps', ... default: 'ftp'
       // protocol is added on beginning of host, ex : sftp://domain.com in this case
       port: n.port || 21, // Optional
@@ -38,8 +36,6 @@ module.exports = function(RED) {
     if (this.credentials && this.credentials.hasOwnProperty("password")) {
       this.options.password = this.credentials.password;
     }
-
-    //console.log(this.options);
   }
 
   RED.nodes.registerType("lftp-config", LftpConfigNode, {
@@ -124,7 +120,6 @@ module.exports = function(RED) {
                   node.error(res.error, msg);
                   node.status(statuses.blank);
                 } else {
-                  node.status({});
                   msg.workdir = event.workdir;
                   msg.payload = {};
                   msg.payload.filedata = res.data;
@@ -176,7 +171,6 @@ module.exports = function(RED) {
                       node.error(res.error, msg);
                       node.status(statuses.blank);
                     } else {
-                      node.status({});
                       msg.workdir = event.workdir;
                       msg.payload = {};
                       msg.payload.filename = event.filename;
@@ -203,7 +197,6 @@ module.exports = function(RED) {
                   node.error(res.error, msg);
                   node.status(statuses.blank);
                 } else {
-                  node.status({});
                   msg.workdir = event.workdir;
                   msg.payload = {};
                   msg.payload.filename = event.filename;
