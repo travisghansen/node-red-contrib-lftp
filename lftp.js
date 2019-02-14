@@ -21,7 +21,7 @@ module.exports = function(RED) {
       retryInterval: n.retryInterval || 5, // Optional, Time in seconds between attempts. Defaults to 5
       retryMultiplier: n.retryMultiplier || 1, // Optional, Multiplier by which retryInterval is multiplied each time new attempt fails. Defaults to 1
       requiresPassword: n.requiresPassword || false, // Optional, defaults to true
-      autoConfirm: true, // Optional, is used to auto confirm ssl questions on sftp or fish protocols, defaults to false
+      autoConfirm: false, // Optional, is used to auto confirm ssl questions on sftp or fish protocols, defaults to false
       cwd: "", // Optional, defaults to the directory from where the script is executed
       additionalLftpCommands: n.additionalLftpCommands || "", // Additional commands to pass to lftp, splitted by ';'
       requireSSHKey: false, //  Optional, defaults to false, This option for SFTP Protocol with ssh key authentication

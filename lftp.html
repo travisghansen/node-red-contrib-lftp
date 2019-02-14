@@ -3,6 +3,7 @@
   <p>help available <a href="https://github.com/Atinux/node-ftps#usage">here</a></p>
   <p>additional commands details <a href="http://lftp.yar.ru/lftp-man.html">here</a></p>
   <p>For self-signed certs use <code>set ssl:verify-certificate no;</code></p>
+  <p>For ssh host verification use <code>set sftp:auto-confirm yes;</code></p>
 </script>
 
 <script type="text/x-red" data-help-name="lftp-command">
@@ -12,8 +13,8 @@
 
 <script type="text/x-red" data-template-name="lftp-config">
   <div class="form-row">
-    <label for="node-input-protocol"><i class="fa fa-wrench"></i> Protocol</label>
-    <select type="text" id="node-input-protocol">
+    <label for="node-config-input-protocol"><i class="fa fa-wrench"></i> Protocol</label>
+    <select type="text" id="node-config-input-protocol">
       <option value="ftp">FTP</option>
       <option value="ftps">FTPS</option>
       <option value="sftp">SFTP</option>
