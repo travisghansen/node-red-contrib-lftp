@@ -1,8 +1,7 @@
 
 # node-red-contrib-lftp
 
-A node-red node that supports FTP(s) and SFTP file transfer.
-(https://github.com/travisghansen/node-red-contrib-lftp)
+A node-red node that supports FTP(s) and SFTP file transfer. [github] (https://github.com/travisghansen/node-red-contrib-lftp)
 
 
 # Install
@@ -42,7 +41,8 @@ environment and understand the implications.
   * https://stackoverflow.com/questions/33744703/how-to-transfer-data-into-remote-file-over-sftp-without-storing-data-in-a-local
   * https://forums.gentoo.org/viewtopic-t-569241-view-next.html?sid=019bc4d2fc0a7f103f7d5d007f359227
  * support `sftp` using keys
- * support `rmdir`
+ * ~~support `rmdir`~~
+ * ~~support `rmrf`~~
  * support for host operations (ie: upload/download to/from the **host fs** running `node-red`)
 
 # License

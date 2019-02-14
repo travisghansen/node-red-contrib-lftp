@@ -68,7 +68,17 @@ module.exports = function(RED) {
 
       node.on("input", function(msg) {
         try {
+          /**
+           * flag status immediately
+           */
+          node.status(statuses.active);
+
+          /**
+           * need to ensure all event values can be set via node or msg
+           * to facilitate the per msg operation functionality
+           */
           var event = {};
+          event.operation = node.operation || msg.operation || "";
           event.workdir = node.workdir || msg.workdir || "";
           event.filename = node.filename || msg.payload.filename || "";
           event.targetFilename =
@@ -76,9 +86,13 @@ module.exports = function(RED) {
           event.savedir = node.savedir || msg.savedir || "";
           event.localFilename = node.localFilename || msg.localFilename || "";
 
-          //console.log("lftp - performing operation: " + node.operation);
+          /**
+           * set this across the board so downstream processing has the
+           * canonical last operation
+           */
+          msg.operation = event.operation;
 
-          node.status(statuses.active);
+          //console.log("lftp - performing operation: " + node.operation);
 
           /**
            * Returns true if the reponse is an error, false otherwise
@@ -90,14 +104,14 @@ module.exports = function(RED) {
             var message = err || res.error;
             if (message) {
               node.error(message, msg);
-              node.status(statuses.blank);
+              node.status(statuses.error);
               return true;
             } else {
               return false;
             }
           };
 
-          switch (node.operation) {
+          switch (event.operation) {
             case "list":
               var conn = new FTPS(node.serverConfig.options);
               conn
@@ -197,6 +211,42 @@ module.exports = function(RED) {
                   node.status(statuses.blank);
                 }
               });
+            case "rmdir":
+              // set filename
+              var filename =
+                utils.addTrailingSlash(event.workdir) + event.filename;
+
+              var conn = new FTPS(node.serverConfig.options);
+              conn.rmdir(filename).exec(function(err, res) {
+                //console.log(res);
+                if (!responseErrorHandler(err, res)) {
+                  msg.workdir = event.workdir;
+                  msg.payload = {};
+                  msg.payload.filename = event.filename;
+                  msg.payload.filepath = filename;
+                  node.send(msg);
+                  node.status(statuses.blank);
+                }
+              });
+              break;
+            case "rmrf":
+              // set filename
+              var filename =
+                utils.addTrailingSlash(event.workdir) + event.filename;
+
+              var conn = new FTPS(node.serverConfig.options);
+              conn.raw('rm -r -f ' + conn._escapeshell(filename));
+              conn.exec(function(err, res) {
+                //console.log(res);
+                if (!responseErrorHandler(err, res)) {
+                  msg.workdir = event.workdir;
+                  msg.payload = {};
+                  msg.payload.filename = event.filename;
+                  msg.payload.filepath = filename;
+                  node.send(msg);
+                  node.status(statuses.blank);
+                }
+              });
               break;
             case "move":
               // move filename
@@ -235,6 +285,10 @@ module.exports = function(RED) {
                   node.status(statuses.blank);
                 }
               });
+              break;
+            default:
+              node.error("invalid operation: " + event.operation, msg);
+              node.status(statuses.error);
               break;
           }
         } catch (error) {

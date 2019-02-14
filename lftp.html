@@ -104,8 +104,11 @@
       <option value="get">get</option>
       <option value="put">put</option>
       <option value="delete">delete</option>
+      <option value="rmdir">rmdir</option>
+      <option value="rmrf">rmrf</option>
       <option value="move">move</option>
       <option value="raw">raw</option>
+      <option value="">- set by msg.operation -</option>
     </select>
   </div>
   <div class="form-row input-workdir-row hidden">
@@ -186,7 +189,7 @@
           targetFilename.hide();
           savedir.hide();
           localFilename.hide();
-        } else if (id == "delete") {
+        } else if (id == "delete" || id == "rmdir" || id == "rmrf") {
           workdir.show();
           filename.show();
           targetFilename.hide();
