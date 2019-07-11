@@ -43,7 +43,7 @@ environment and understand the implications.
  * support `sftp` using keys
  * ~~support `rmdir`~~
  * ~~support `rmrf`~~
- * support for host operations (ie: upload/download to/from the **host fs** running `node-red`)
+ * ~~support for host operations (ie: upload/download to/from the **host fs** running `node-red`)~~
 
 # License
 

@@ -1,4 +1,4 @@
-module.exports = function (RED) {
+module.exports = function(RED) {
   "use strict";
   var fs = require("fs");
   var FTPS = require("ftps");
@@ -6,7 +6,7 @@ module.exports = function (RED) {
   var tmp = require("tmp");
   var utils = require("./utils");
 
-  function LftpConfigNode (n) {
+  function LftpConfigNode(n) {
     RED.nodes.createNode(this, n);
 
     this.options = {
@@ -45,7 +45,7 @@ module.exports = function (RED) {
     }
   });
 
-  function LftpCommandNode (n) {
+  function LftpCommandNode(n) {
     RED.nodes.createNode(this, n);
     var node = this;
     this.server = n.server;
@@ -68,7 +68,7 @@ module.exports = function (RED) {
      * @param {*} err
      * @param {*} res
      */
-    var responseErrorHandler = function (err, res, msg) {
+    var responseErrorHandler = function(err, res, msg) {
       let message = null;
       try {
         if (err) {
@@ -94,13 +94,14 @@ module.exports = function (RED) {
     };
 
     this.commands = {};
-    this.commands.list = function (event, msg) {
+    this.commands.list = function(event, msg) {
       var conn = new FTPS(node.serverConfig.options);
-      conn.cd(event.workdir)
+      conn
+        .cd(event.workdir)
         .ls()
-        .exec(function (err, res) {
+        .exec(function(err, res) {
           if (!responseErrorHandler(err, res, msg)) {
-            Parser.parseEntries(res.data, function (err, data) {
+            Parser.parseEntries(res.data, function(err, data) {
               if (err) {
                 node.error(statuses.error);
               }
@@ -113,25 +114,36 @@ module.exports = function (RED) {
         });
     };
 
-    this.commands.get = function (event, msg) {
-      var filename =
-        utils.addTrailingSlash(event.workdir) + event.filename;
+    this.commands.get = function(event, msg) {
+      var filename = utils.addTrailingSlash(event.workdir) + event.filename;
+      var targetFilename = event.localFilename;
 
       var conn = new FTPS(node.serverConfig.options);
-      conn.cat(filename).exec(function (err, res) {
+      conn.cat(filename).exec(function(err, res) {
         if (!responseErrorHandler(err, res, msg)) {
           msg.workdir = event.workdir;
           msg.payload = {};
           msg.payload.filedata = res.data;
           msg.payload.filename = event.filename;
           msg.payload.filepath = filename;
-          node.send(msg);
-          node.status(statuses.blank);
+
+          if (targetFilename) {
+            fs.writeFile(targetFilename, res.data, function(err) {
+              if (err) {
+                throw err;
+              }
+              node.send(msg);
+              node.status(statuses.blank);
+            });
+          } else {
+            node.send(msg);
+            node.status(statuses.blank);
+          }
         }
       });
     };
 
-    this.commands.put = function (event, msg) {
+    this.commands.put = function(event, msg) {
       if (!event.filename.length > 0) {
         var d = new Date();
         var guid = d.getTime().toString();
@@ -143,19 +155,16 @@ module.exports = function (RED) {
         event.filename = guid + node.fileExtension;
       }
 
-      var filename =
-            utils.addTrailingSlash(event.workdir) + event.filename;
-      var filedata =
-            msg.payload.filedata || JSON.stringify(msg.payload);
-      var sourcefile =
-            event.localFilename;
+      var filename = utils.addTrailingSlash(event.workdir) + event.filename;
+      var filedata = msg.payload.filedata || JSON.stringify(msg.payload);
+      var sourceFilename = event.localFilename;
 
-      if (sourcefile) {
-        node.debug("putting " + sourcefile + " directly");
+      if (sourceFilename) {
+        node.debug("putting " + sourceFilename + " directly");
         // If we have a sourcefile instead of file data, we can just
         // directly give this file to FPTS
         var conn = new FTPS(node.serverConfig.options);
-        conn.put(sourcefile, filename).exec(function (err, res) {
+        conn.put(sourceFilename, filename).exec(function(err, res) {
           if (!responseErrorHandler(err, res, msg)) {
             msg.workdir = event.workdir;
             msg.payload = {};
@@ -171,17 +180,17 @@ module.exports = function (RED) {
         // temporary file because lftp can't stream data directly.
         // This file is temporarily written to disk, put, then
         // deleted locally.
-        tmp.file(function (err, path, fd, cleanupCallback) {
+        tmp.file(function(err, path, fd, cleanupCallback) {
           if (err) throw err;
 
-          fs.writeFile(path, filedata, function (err) {
+          fs.writeFile(path, filedata, function(err) {
             if (err) {
               cleanupCallback();
               throw err;
             }
 
             var conn = new FTPS(node.serverConfig.options);
-            conn.put(path, filename).exec(function (err, res) {
+            conn.put(path, filename).exec(function(err, res) {
               cleanupCallback();
               if (!responseErrorHandler(err, res, msg)) {
                 msg.workdir = event.workdir;
@@ -201,12 +210,11 @@ module.exports = function (RED) {
       }
     };
 
-    this.commands.delete = function (event, msg) {
-      var filename =
-        utils.addTrailingSlash(event.workdir) + event.filename;
+    this.commands.delete = function(event, msg) {
+      var filename = utils.addTrailingSlash(event.workdir) + event.filename;
 
       var conn = new FTPS(node.serverConfig.options);
-      conn.rm(filename).exec(function (err, res) {
+      conn.rm(filename).exec(function(err, res) {
         if (!responseErrorHandler(err, res, msg)) {
           msg.workdir = event.workdir;
           msg.payload = {};
@@ -218,12 +226,11 @@ module.exports = function (RED) {
       });
     };
 
-    this.commands.rmdir = function (event, msg) {
-      var filename =
-        utils.addTrailingSlash(event.workdir) + event.filename;
+    this.commands.rmdir = function(event, msg) {
+      var filename = utils.addTrailingSlash(event.workdir) + event.filename;
 
       var conn = new FTPS(node.serverConfig.options);
-      conn.rmdir(filename).exec(function (err, res) {
+      conn.rmdir(filename).exec(function(err, res) {
         if (!responseErrorHandler(err, res, msg)) {
           msg.workdir = event.workdir;
           msg.payload = {};
@@ -235,13 +242,12 @@ module.exports = function (RED) {
       });
     };
 
-    this.commands.rmrf = function (event, msg) {
-      var filename =
-        utils.addTrailingSlash(event.workdir) + event.filename;
+    this.commands.rmrf = function(event, msg) {
+      var filename = utils.addTrailingSlash(event.workdir) + event.filename;
 
       var conn = new FTPS(node.serverConfig.options);
       conn.raw("rm -r -f " + conn._escapeshell(filename));
-      conn.exec(function (err, res) {
+      conn.exec(function(err, res) {
         if (!responseErrorHandler(err, res, msg)) {
           msg.workdir = event.workdir;
           msg.payload = {};
@@ -253,14 +259,13 @@ module.exports = function (RED) {
       });
     };
 
-    this.commands.move = function (event, msg) {
-      var filename =
-            utils.addTrailingSlash(event.workdir) + event.filename;
+    this.commands.move = function(event, msg) {
+      var filename = utils.addTrailingSlash(event.workdir) + event.filename;
       var targetFilename =
-            utils.addTrailingSlash(event.workdir) + event.targetFilename;
+        utils.addTrailingSlash(event.workdir) + event.targetFilename;
 
       var conn = new FTPS(node.serverConfig.options);
-      conn.mv(filename, targetFilename).exec(function (err, res) {
+      conn.mv(filename, targetFilename).exec(function(err, res) {
         if (!responseErrorHandler(err, res, msg)) {
           msg.workdir = event.workdir;
           msg.payload = {};
@@ -272,7 +277,7 @@ module.exports = function (RED) {
       });
     };
 
-    this.commands.raw = function (event, msg) {
+    this.commands.raw = function(event, msg) {
       var conn = new FTPS(node.serverConfig.options);
       if (Array.isArray(msg.payload)) {
         for (var i = 0, len = msg.payload.length; i < len; i++) {
@@ -281,7 +286,7 @@ module.exports = function (RED) {
       } else {
         conn.raw(msg.payload);
       }
-      conn.exec(function (err, res) {
+      conn.exec(function(err, res) {
         if (!responseErrorHandler(err, res, msg)) {
           msg.payload = res.data;
           node.send(msg);
@@ -291,7 +296,7 @@ module.exports = function (RED) {
     };
 
     if (this.server) {
-      node.on("input", function (msg) {
+      node.on("input", function(msg) {
         try {
           /**
            * flag status immediately
@@ -299,22 +304,26 @@ module.exports = function (RED) {
           node.status(statuses.active);
 
           /**
-            * need to ensure all event values can be set via node or msg
-            * to facilitate the per msg operation functionality
-            */
+           * need to ensure all event values can be set via node or msg
+           * to facilitate the per msg operation functionality
+           */
           var event = {};
           event.operation = node.operation || msg.operation || "";
           event.workdir = node.workdir || msg.workdir || "";
           event.filename = node.filename || msg.payload.filename || "";
           event.targetFilename =
-                    node.targetFilename || msg.payload.targetFilename || "";
+            node.targetFilename || msg.payload.targetFilename || "";
           event.savedir = node.savedir || msg.savedir || "";
-          event.localFilename = node.localFilename || msg.localFilename || msg.payload.localFilename || "";
+          event.localFilename =
+            node.localFilename ||
+            msg.localFilename ||
+            msg.payload.localFilename ||
+            "";
 
           /**
-            * set this across the board so downstream processing has the
-            * canonical last operation
-            */
+           * set this across the board so downstream processing has the
+           * canonical last operation
+           */
           msg.operation = event.operation;
 
           if (event.operation && node.commands[event.operation]) {
